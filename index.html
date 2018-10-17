@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+    <p>Test</p>
+    <p id="result"></p>
+	<script>
+		var req = new XMLHttpRequest();
+		var id = '0b43d40e3aaf1972fb8f7947b8e44d5e13b1f880a4d556eab94f794069cbb08e';
+		req.open("GET", "https://api.unsplash.com/photos/?client_id=0b43d40e3aaf1972fb8f7947b8e44d5e13b1f880a4d556eab94f794069cbb08e", false);
+		req.send(null);
+		var result = JSON.parse(req.responseText);
+		console.log(result);
+		var images =[];
+		for (var key in result) {
+		  src=result[key].urls.small;
+		  var newImg = document.createElement('img');
+		  newImg.setAttribute('src',src);
+			document.getElementById('result').appendChild(newImg);console.log(src);
+		}
+		
+    </script>
+</body>
+</html>
