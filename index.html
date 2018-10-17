@@ -1,27 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>Document</title>
+    <meta charset="UTF-8">
+    <title>Document</title>
 </head>
 <body>
-    <p>Test</p>
-    <p id="result"></p>
-	<script>
-		var req = new XMLHttpRequest();
-		var id = '0b43d40e3aaf1972fb8f7947b8e44d5e13b1f880a4d556eab94f794069cbb08e';
-		req.open("GET", "https://api.unsplash.com/photos/?client_id=0b43d40e3aaf1972fb8f7947b8e44d5e13b1f880a4d556eab94f794069cbb08e", false);
-		req.send(null);
-		var result = JSON.parse(req.responseText);
-		console.log(result);
-		var images =[];
-		for (var key in result) {
-		  src=result[key].urls.small;
-		  var newImg = document.createElement('img');
-		  newImg.setAttribute('src',src);
-			document.getElementById('result').appendChild(newImg);console.log(src);
-		}
-		
-    </script>
+<h1>Test Unsplash api</h1>
+<p id="result" class="collections"></p>
+<style>
+    @import url('https://fonts.googleapis.com/css?family=PT+Sans&subset=cyrillic');
+    body {
+        font-family: 'PT Sans', sans-serif;
+    }
+    .collections {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .collectionItem {
+        width: 50%;
+        flex: 1 0 50%;
+    }
+    .collectionItemName {
+        width: 100%;
+    }
+</style>
+<script>
+    var id = '0b43d40e3aaf1972fb8f7947b8e44d5e13b1f880a4d556eab94f794069cbb08e';
+
+    //start test
+    var req = new XMLHttpRequest();
+    req.open("GET", "https://api.unsplash.com/photos/?client_id="+id, false);
+    req.send(null);
+    var result = JSON.parse(req.responseText);
+    //console.log(result);
+    for (var key in result) {
+        var src=result[key].urls.small;
+        var newImg = document.createElement('img');
+        newImg.setAttribute('src',src);
+        //document.getElementById('result').appendChild(newImg);
+    }
+    //end test
+
+    //получаем коллекции
+    var collections = new XMLHttpRequest();
+    collections.open("GET", "https://api.unsplash.com/collections/?client_id="+id, false);
+    collections.send(null);
+    var collectionsResult = JSON.parse(collections.responseText);
+    console.log(collectionsResult);
+
+    for (var key in collectionsResult) {
+        var collectionItemContainer = document.createElement('div');
+        collectionItemContainer.setAttribute('class','collectionItem');
+
+        var collectionsItems;
+        var collectionsPhotos = [];
+        collectionsItems = collectionsResult[key].title;
+        var countImages = collectionsResult[key].preview_photos.length - 1;
+
+        for (var i = 0; i < countImages; i++)  {
+            collectionsPhotos[i] = collectionsResult[key].preview_photos[i].urls.thumb;
+            var newImg = document.createElement('img');
+            newImg.setAttribute('src',collectionsPhotos[i]);
+            collectionItemContainer.appendChild(newImg);
+        }
+        //console.log(collectionsHrefs);
+        var newCollectionItem = document.createElement('h2');
+        newCollectionItem.textContent = collectionsItems;
+        collectionItemContainer.setAttribute('data-collection',collectionsItems);
+        collectionItemContainer.appendChild(newCollectionItem);
+        document.getElementById('result').appendChild(collectionItemContainer);
+    }
+
+    //попытка поиска
+    var collections1 = new XMLHttpRequest();
+    collections1.open("GET", "https://api.unsplash.com/search/collections?query=Office Life&client_id="+id, false);
+    collections1.send(null);
+    var collectionsResult1 = JSON.parse(collections1.responseText);
+    console.log(collectionsResult1);
+
+
+</script>
 </body>
 </html>
