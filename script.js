@@ -2,13 +2,26 @@ const id = '0b43d40e3aaf1972fb8f7947b8e44d5e13b1f880a4d556eab94f794069cbb08e';
 let nextPagen = 2;
 
 class Collection {
+
     constructor(collectionsResult) {
+        this.collectionsList = document.getElementById('result');
+        this.collectionPhotoList = document.getElementById('currentCollection');
+
         this.container = document.createElement('div');
         this.container.className = 'collections__item';
+
+        this.photoContainer = document.createElement('div');
+        this.photoContainer.className = 'collection__photos';
 
         this.showTop(collectionsResult);
 
         this.showBottom(collectionsResult);
+
+        this.container.addEventListener('click', event => {
+            event.stopPropagation();
+            let currentCollection = event.currentTarget.getAttribute('data-collection');
+            this.showCollectionPhotos(request(`https://api.unsplash.com/collections/${currentCollection}/photos?per_page=12&client_id=`));
+        });
     }
 
     showTop(collectionsResult) {
@@ -53,32 +66,52 @@ class Collection {
 
         this.collectionsAuthor = document.createElement('div');
         this.collectionsAuthor.className = 'collections__item-author';
-        this.collectionsAuthor.innerHTML = `Curated by ${collectionsResult.user.name}`;
+        this.collectionsAuthor.innerHTML = `Curated by <b>${collectionsResult.user.name}</b>`;
 
         this.containerBottom.appendChild(this.name);
         this.containerBottom.appendChild(this.collectionsCount);
         this.containerBottom.appendChild(this.collectionsAuthor);
         this.container.appendChild(this.containerBottom);
 
-        this.container.setAttribute('data-collection', collectionsResult.title);
+        this.container.setAttribute('data-collection', collectionsResult.id);
     }
 
     show() {
-        document.getElementById('result').appendChild(this.container);
+        this.collectionsList.appendChild(this.container);
     }
 
-    /*this.container.addEventListener('click', event => {
-        event.stopPropagation();
-        let currentCollection = event.currentTarget.getAttribute('data-collection');
-        console.log(currentCollection);
-        let collections1 = new XMLHttpRequest();
-        collections1.open("GET", "https://api.unsplash.com/search/collections?query=" + currentCollection + "&client_id=" + id, false);
-        collections1.send(null);
-        let collectionsResult1 = JSON.parse(collections1.responseText);
-        console.log(collectionsResult1);
-        //функция с отрисовкой коллекций
-    });*/
+    showCollectionPhotos(photos) {
+        this.collectionPhotos = [];
 
+        for (let i = 0; i < photos.length; i++) {
+
+            this.collectionPhotos[i] = photos[i].urls.regular;
+
+            this.newPhotoWrap = document.createElement('div');
+            this.newPhotoWrap.className = 'collections__item-img-wrap';
+
+            this.newPhoto = document.createElement('img');
+            this.newPhoto.setAttribute('src', this.collectionPhotos[i]);
+
+            this.newPhotoWrap.appendChild(this.newPhoto);
+            this.photoContainer.appendChild(this.newPhotoWrap);
+
+        }
+
+        this.collectionsList.classList.add('hide');
+        this.collectionPhotoList.appendChild(this.name);
+        this.collectionPhotoList.appendChild(this.photoContainer);
+        this.collectionPhotoList.classList.add('show');
+
+        this.collectionPhotoList.addEventListener('click', event => {
+            this.hideCollectionPhotos();
+        });
+    }
+    hideCollectionPhotos() {
+        this.collectionPhotoList.innerHTML = "";
+        this.collectionsList.classList.remove('hide');
+        this.collectionPhotoList.classList.remove('show');
+    }
 }
 
 function request(text) {
@@ -99,7 +132,6 @@ function showCollections(collectionsResult) {
 }
 
 function isVisible(elem) {
-
     let coords = elem.getBoundingClientRect();
     let windowHeight = document.documentElement.clientHeight;
 
@@ -108,18 +140,20 @@ function isVisible(elem) {
     return bottomVisible;
 }
 
-//выводим коллекции
-showCollections(request("https://api.unsplash.com/collections/?client_id="));
+function showNextPage() {
+    let collections = document.getElementById('result');
 
-window.onscroll = function () {
-
-    if (isVisible(document.getElementById('result'))) {
-
+    if (isVisible(collections)) {
         showCollections(request(`https://api.unsplash.com/collections/?page=${nextPagen}&client_id=`));
-
+        console.log('showNextPage');
         nextPagen++;
     }
 
 }
+
+//выводим коллекции
+showCollections(request("https://api.unsplash.com/collections/?client_id="));
+
+window.onscroll = showNextPage;
 
 
