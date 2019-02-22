@@ -1,59 +1,16 @@
 const id = '0b43d40e3aaf1972fb8f7947b8e44d5e13b1f880a4d556eab94f794069cbb08e';
+let nextPagen = 2;
 
-//получаем коллекции
-let collections = new XMLHttpRequest();
-collections.open("GET", "https://api.unsplash.com/collections/?client_id="+id, false);
-collections.send(null);
-let collectionsResult = JSON.parse(collections.responseText);
-//console.log(collectionsResult);
-for (let key in collectionsResult) {
-    let collectionItemContainer = document.createElement('div');
-    collectionItemContainer.setAttribute('class','collections__item');
+function Collection(collectionsResult) {
 
-    let collectionItemTop = document.createElement('div');
-    collectionItemTop.setAttribute('class','collections__item-top');
+    this.container = document.createElement('div');
+    this.container.className = 'collections__item';
 
-    let collectionsPhotos = [];
-    let collectionsItems = collectionsResult[key].title;
-    let collectionsCount = collectionsResult[key].total_photos;
-    let collectionsAuthor = collectionsResult[key].user.name;
+    this.showTop(collectionsResult);
 
-    let countImages = 3;//collectionsResult[key].preview_photos.length - 1;
+    this.showBottom(collectionsResult);
 
-    for (let i = 0; i < countImages; i++)  {
-        collectionsPhotos[i] = collectionsResult[key].preview_photos[i].urls.regular;
-
-        let imgWrap = document.createElement('div');
-
-        imgWrap.setAttribute('class',(i==0)?'collections__item-img-wrap first':'collections__item-img-wrap');
-
-        let newImg = document.createElement('img');
-        newImg.setAttribute('src',collectionsPhotos[i]);
-
-        imgWrap.appendChild(newImg);
-        collectionItemTop.appendChild(imgWrap);
-        
-    }
-
-    collectionItemContainer.appendChild(collectionItemTop);
-    
-    let newCollectionItem = document.createElement('h2');
-    newCollectionItem.textContent = collectionsItems;
-
-    let newCollectionCount = document.createElement('div');
-    newCollectionCount.setAttribute('class','collections__item-count');
-    newCollectionCount.textContent = collectionsCount + ' photos';
-
-    let newCollectionsAuthor = document.createElement('div');
-    newCollectionsAuthor.setAttribute('class','collections__item-author');
-    newCollectionsAuthor.textContent = 'Curated by ' + collectionsAuthor;
-    
-    collectionItemContainer.setAttribute('data-collection',collectionsItems);
-    collectionItemContainer.appendChild(newCollectionItem);
-    collectionItemContainer.appendChild(newCollectionCount);
-    collectionItemContainer.appendChild(newCollectionsAuthor);
-
-    collectionItemContainer.addEventListener('click', event => {
+    /*this.container.addEventListener('click', event => {
         event.stopPropagation();
         let currentCollection = event.currentTarget.getAttribute('data-collection');
         console.log(currentCollection);
@@ -63,15 +20,105 @@ for (let key in collectionsResult) {
         let collectionsResult1 = JSON.parse(collections1.responseText);
         console.log(collectionsResult1);
         //функция с отрисовкой коллекций
-    });
+    });*/
 
-    document.getElementById('result').appendChild(collectionItemContainer);
 }
 
+Collection.prototype.showTop = function (collectionsResult) {
+    this.containerTop = document.createElement('div');
+    this.containerTop.className = 'collections__item-top';
 
-let collectionsItems = "Dancers";
+    this.showPreview(collectionsResult.preview_photos.length - 1, collectionsResult.preview_photos);
 
-//попытка поиска
+    this.container.appendChild(this.containerTop);
+}
 
-//
+Collection.prototype.showPreview = function (count,photos) {
+    this.photos = [];
+
+    for (let i = 0; i < count; i++) {
+        this.photos[i] = photos[i].urls.regular;
+
+        this.imgWrap = document.createElement('div');
+
+        this.imgWrap.setAttribute('class', (i == 0) ? 'collections__item-img-wrap first' : 'collections__item-img-wrap');
+
+        this.newImg = document.createElement('img');
+        this.newImg.setAttribute('src', this.photos[i]);
+
+        this.imgWrap.appendChild(this.newImg);
+        this.containerTop.appendChild(this.imgWrap);
+
+    }
+}
+
+Collection.prototype.showBottom = function (collectionsResult) {
+
+    this.containerBottom = document.createElement('div');
+    this.containerBottom.className = 'collections__item-bottom';
+
+    this.name = document.createElement('h2');
+    this.name.innerHTML = collectionsResult.title;
+
+    this.collectionsCount = document.createElement('div');
+    this.collectionsCount.className = 'collections__item-count';
+    this.collectionsCount.innerHTML = collectionsResult.total_photos + ' photos';
+
+    this.collectionsAuthor = document.createElement('div');
+    this.collectionsAuthor.className = 'collections__item-author';
+    this.collectionsAuthor.innerHTML = 'Curated by ' + collectionsResult.user.name;
+
+    this.containerBottom.appendChild(this.name);
+    this.containerBottom.appendChild(this.collectionsCount);
+    this.containerBottom.appendChild(this.collectionsAuthor);
+    this.container.appendChild(this.containerBottom);
+
+    this.container.setAttribute('data-collection', collectionsResult.title);
+}
+
+Collection.prototype.show = function () {
+    document.getElementById('result').appendChild(this.container);
+}
+
+function request(text) {
+    //получаем коллекции
+    let collections = new XMLHttpRequest();
+    collections.open("GET", text + id, false);
+    collections.send(null);
+    let collectionsResult = JSON.parse(collections.responseText);
+
+    return collectionsResult;
+}
+
+function showCollections (collectionsResult) {
+    for (let key in collectionsResult) {
+        let t = new Collection(collectionsResult[key]);
+        t.show();
+    }
+}
+
+function isVisible(elem) {
+
+    let coords = elem.getBoundingClientRect();
+    let windowHeight = document.documentElement.clientHeight;
+
+    let bottomVisible = coords.bottom < windowHeight && coords.bottom > 0;
+
+    return  bottomVisible;
+}
+
+//выводим коллекции
+showCollections(request("https://api.unsplash.com/collections/?client_id="));
+
+window.onscroll = function() {
+
+    if (isVisible(document.getElementById('result'))) {
+
+        showCollections(request("https://api.unsplash.com/collections/?page=" + nextPagen + "&client_id="));
+
+        nextPagen++;
+    }
+
+}
+
 
